@@ -1,0 +1,360 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Convera messaging API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: profile
+    description: Profile and presence operations
+  - name: chats
+    description: Conversations and messages
+  - name: saved
+    description: Saved messages
+  - name: blocked
+    description: Blocked message inbox
+  - name: settings
+    description: User appearance and chat settings
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getCurrentUser
+      tags: [profile]
+      summary: Get the current profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /chats:
+    get:
+      operationId: listChats
+      tags: [chats]
+      summary: List the user's conversations
+      responses:
+        "200":
+          description: Conversation list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Chat"
+  /chats/{chatId}/messages:
+    get:
+      operationId: listChatMessages
+      tags: [chats]
+      summary: Get messages for a conversation
+      parameters:
+        - $ref: "#/components/parameters/ChatId"
+      responses:
+        "200":
+          description: Message history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [chats]
+      summary: Send a message
+      parameters:
+        - $ref: "#/components/parameters/ChatId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /chats/{chatId}/vanish:
+    post:
+      operationId: toggleVanishMode
+      tags: [chats]
+      summary: Toggle vanish mode
+      parameters:
+        - $ref: "#/components/parameters/ChatId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VanishModeInput"
+      responses:
+        "200":
+          description: Updated vanish mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Chat"
+  /messages/{messageId}/save:
+    post:
+      operationId: saveMessage
+      tags: [saved]
+      summary: Save a message
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+      responses:
+        "201":
+          description: Saved message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedMessage"
+    delete:
+      operationId: unsaveMessage
+      tags: [saved]
+      summary: Remove a message from saved messages
+      parameters:
+        - $ref: "#/components/parameters/MessageId"
+      responses:
+        "204":
+          description: Removed
+  /saved-messages:
+    get:
+      operationId: listSavedMessages
+      tags: [saved]
+      summary: List saved messages
+      responses:
+        "200":
+          description: Saved messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedMessage"
+  /blocked-messages:
+    get:
+      operationId: listBlockedThreads
+      tags: [blocked]
+      summary: List blocked message threads
+      responses:
+        "200":
+          description: Blocked message threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlockedThread"
+  /users/{userId}/block:
+    post:
+      operationId: blockUser
+      tags: [blocked]
+      summary: Block a user
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "201":
+          description: Blocked thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockedThread"
+    delete:
+      operationId: unblockUser
+      tags: [blocked]
+      summary: Unblock a user
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "204":
+          description: Unblocked
+  /settings:
+    get:
+      operationId: getAppearanceSettings
+      tags: [settings]
+      summary: Get appearance settings
+      responses:
+        "200":
+          description: Appearance settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppearanceSettings"
+    patch:
+      operationId: updateAppearanceSettings
+      tags: [settings]
+      summary: Update appearance settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppearanceSettingsUpdate"
+      responses:
+        "200":
+          description: Updated appearance settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppearanceSettings"
+  /summary:
+    get:
+      operationId: getConversationSummary
+      tags: [chats]
+      summary: Get a small conversation summary
+      responses:
+        "200":
+          description: Conversation summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationSummary"
+components:
+  parameters:
+    ChatId:
+      name: chatId
+      in: path
+      required: true
+      schema:
+        type: string
+    MessageId:
+      name: messageId
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    User:
+      type: object
+      required: [id, displayName, username, initials, onlineStatus]
+      properties:
+        id: { type: string }
+        displayName: { type: string }
+        username: { type: string }
+        initials: { type: string }
+        avatarUrl: { type: ["string", "null"] }
+        bio: { type: ["string", "null"] }
+        onlineStatus: { type: string, enum: [online, away, offline] }
+        lastSeenLabel: { type: ["string", "null"] }
+    Chat:
+      type: object
+      required: [id, participant, lastMessage, lastMessageAt, unreadCount, archived, blocked, vanishMode]
+      properties:
+        id: { type: string }
+        participant: { $ref: "#/components/schemas/User" }
+        lastMessage: { type: ["string", "null"] }
+        lastMessageAt: { type: ["string", "null"] }
+        unreadCount: { type: integer, minimum: 0 }
+        archived: { type: boolean }
+        blocked: { type: boolean }
+        vanishMode: { type: boolean }
+    Message:
+      type: object
+      required: [id, chatId, senderId, body, sentAt, direction, deliveryStatus, isSaved, isEdited, expression]
+      properties:
+        id: { type: string }
+        chatId: { type: string }
+        senderId: { type: string }
+        body: { type: string }
+        sentAt: { type: string }
+        direction: { type: string, enum: [incoming, outgoing] }
+        deliveryStatus: { type: string, enum: [sent, delivered, read] }
+        isSaved: { type: boolean }
+        isEdited: { type: boolean }
+        expression: { type: string, enum: [happy, neutral, laughing, thinking, excited, sad, surprised, sleepy, celebrating] }
+        replyTo: { type: ["string", "null"] }
+        reaction: { type: ["string", "null"] }
+    MessageInput:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1 }
+        replyTo: { type: ["string", "null"] }
+    SavedMessage:
+      type: object
+      required: [id, messageId, chatId, body, savedAt, senderName]
+      properties:
+        id: { type: string }
+        messageId: { type: string }
+        chatId: { type: string }
+        body: { type: string }
+        savedAt: { type: string }
+        senderName: { type: string }
+    BlockedThread:
+      type: object
+      required: [id, participant, unreadCount, lastMessage, lastMessageAt]
+      properties:
+        id: { type: string }
+        participant: { $ref: "#/components/schemas/User" }
+        unreadCount: { type: integer, minimum: 0 }
+        lastMessage: { type: string }
+        lastMessageAt: { type: string }
+    VanishModeInput:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    AppearanceSettings:
+      type: object
+      required: [background, brightness, transparency, blur, fontSize, showAvatars, motionEnabled]
+      properties:
+        background: { type: string, enum: [sunset, ocean, mountains, night, forest, minimal, solid] }
+        brightness: { type: number, minimum: 0, maximum: 1 }
+        transparency: { type: number, minimum: 0, maximum: 1 }
+        blur: { type: number, minimum: 0, maximum: 1 }
+        fontSize: { type: string, enum: [small, medium, large] }
+        showAvatars: { type: boolean }
+        motionEnabled: { type: boolean }
+    AppearanceSettingsUpdate:
+      type: object
+      properties:
+        background: { type: string, enum: [sunset, ocean, mountains, night, forest, minimal, solid] }
+        brightness: { type: number, minimum: 0, maximum: 1 }
+        transparency: { type: number, minimum: 0, maximum: 1 }
+        blur: { type: number, minimum: 0, maximum: 1 }
+        fontSize: { type: string, enum: [small, medium, large] }
+        showAvatars: { type: boolean }
+        motionEnabled: { type: boolean }
+    ConversationSummary:
+      type: object
+      required: [totalChats, unreadChats, savedCount, blockedCount]
+      properties:
+        totalChats: { type: integer }
+        unreadChats: { type: integer }
+        savedCount: { type: integer }
+        blockedCount: { type: integer }
+
