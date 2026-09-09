@@ -4,6 +4,8 @@
 
 A modern, real-time messaging platform built with **Java Spring Boot, MS SQL Server, HTML, CSS, Tailwind CSS, Bootstrap, and Vanilla JavaScript**.
 
+ **Note:** For security and safety purposes, not all project files have been publicly deployed in this repository.
+
 The project is designed as a next-generation alternative to conventional chat applications, combining the simplicity of traditional messaging platforms with an immersive visual experience and privacy-focused communication features.
 
 ## ✨ Highlights
